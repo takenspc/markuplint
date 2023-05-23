@@ -510,41 +510,11 @@ class SelectorTarget {
 
 		let matched = true;
 
-		if (!this.#isAdded && !isScope(el, scope)) {
+		if (matched && !this.#isAdded && !isScope(el, scope)) {
 			matched = false;
 		}
 
-		if (!this.id.every(id => id.value === el.id)) {
-			matched = false;
-		}
-		specificity[0] += this.id.length;
-
-		if (!this.class.every(className => el.classList.contains(className.value))) {
-			matched = false;
-		}
-		specificity[1] += this.class.length;
-
-		if (!this.attr.every(attr => attrMatch(attr, el))) {
-			matched = false;
-		}
-		specificity[1] += this.attr.length;
-
-		for (const pseudo of this.pseudo) {
-			const pseudoRes = pseudoMatch(pseudo, el, scope, this.#extended, this.depth);
-
-			specificity[0] += pseudoRes.specificity[0];
-			specificity[1] += pseudoRes.specificity[1];
-			specificity[2] += pseudoRes.specificity[2];
-
-			if (pseudoRes.matched) {
-				has.push(...pseudoRes.has);
-			} else {
-				not.push(...(pseudoRes.not ?? []));
-				matched = false;
-			}
-		}
-
-		if (this.tag && this.tag.type === 'tag') {
+		if (matched && this.tag && this.tag.type === 'tag') {
 			specificity[2] += 1;
 
 			let a = this.tag.value;
@@ -557,6 +527,38 @@ class SelectorTarget {
 
 			if (a !== b) {
 				matched = false;
+			}
+		}
+
+		if (matched && !this.id.every(id => id.value === el.id)) {
+			matched = false;
+		}
+		specificity[0] += this.id.length;
+
+		if (matched && !this.class.every(className => el.classList.contains(className.value))) {
+			matched = false;
+		}
+		specificity[1] += this.class.length;
+
+		if (matched && !this.attr.every(attr => attrMatch(attr, el))) {
+			matched = false;
+		}
+		specificity[1] += this.attr.length;
+
+		if (matched) {
+			for (const pseudo of this.pseudo) {
+				const pseudoRes = pseudoMatch(pseudo, el, scope, this.#extended, this.depth);
+
+				specificity[0] += pseudoRes.specificity[0];
+				specificity[1] += pseudoRes.specificity[1];
+				specificity[2] += pseudoRes.specificity[2];
+
+				if (pseudoRes.matched) {
+					has.push(...pseudoRes.has);
+				} else {
+					not.push(...(pseudoRes.not ?? []));
+					matched = false;
+				}
 			}
 		}
 
